@@ -1,30 +1,11 @@
+
 import numpy as np
 from skimage.transform import resize
-from projection import flow_img
+from utilities.image_flower import flow_single
 
-"""Base = np.random.normal(size = (200,200))
-Base = gaussian_filter(Base, 5.)
-
-#A, B = Base[:50,:50], Base[5:55,3:53]
-A = np.array(Image.open("PhyDNet-master/data/mobotix3-planarRB256/2020-07-02/2020-07-02_11_23.png"))[:,:]/255
-B = np.array(Image.open("PhyDNet-master/data/mobotix3-planarRB256/2020-07-02/2020-07-02_11_24.png"))[:,:]/255
-
-#A = gaussian_filter(A,2.)
-#B = gaussian_filter(B,2.)
-
-dx, dy = 17, -17
-
-#A, B = A[30:130,30:130], B[30:130,30:130] # A[30+dx:130+dx,30+dy:130+dy]
-
-
-plt.subplot(1,2,1).imshow(A)
-plt.subplot(1,2,2).imshow(B)
-plt.show()
-"""
 
 
 def simple_optical_flow(A, B, GradB, W):
-
     """
     Computes the Lukas-Kanade optical flow
     
@@ -61,7 +42,6 @@ def simple_optical_flow(A, B, GradB, W):
 
 
 class Pyramid_OF():
-
     """
     A class used to perform Lukas-Kanade pyramidal iterative optical flow computations.
 
@@ -217,7 +197,7 @@ class Pyramid_OF():
                 else:
                     n = iters
                 for _ in range(n):
-                    flownA, flownW = flow_img(self.As[level], theta_tot, self.W_As[level])
+                    flownA, flownW = flow_single(self.As[level], theta_tot, self.W_As[level])
                     resized_window = resize(window.astype(np.float32), self.As[level].shape)
                     theta_tot += simple_optical_flow(flownA, self.Bs[level], self.Grads[level], flownW*self.W_Bs[level]*resized_window)
 
@@ -246,3 +226,30 @@ class Pyramid_OF():
 
         self.As = self.Bs
         self.W_As = self.W_Bs
+
+
+if __name__ == "__main__":
+
+    import matplotlib.pyplot as plt
+    from scipy.ndimage import gaussian_filter
+        
+    Base = np.random.normal(size = (200,200))
+    Base = gaussian_filter(Base, 5.)
+
+    dx, dy = 17, -17
+
+    A, B = Base[30:158,30:158], Base[30+dx:158+dx,30+dy:158+dy]
+
+
+    plt.subplot(1,2,1).imshow(A)
+    plt.subplot(1,2,2).imshow(B)
+    plt.show()
+    
+    pyramid = Pyramid_OF(128, 4)
+    pyramid.compute_resized(A)
+    pyramid.compute_gradient()
+    pyramid.step()
+
+    pyramid.compute_resized(B)
+    pyramid.compute_gradient()
+    print(pyramid.compute_windowed_OF(np.ones((128,128), dtype=np.float32), iters=2, iters_upper_layer=2))
