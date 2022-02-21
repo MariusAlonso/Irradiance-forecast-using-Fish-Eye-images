@@ -147,7 +147,6 @@ class Pyramid_OF():
         self.Grads = []
 
         for i, B in enumerate(self.Bs):
-
             gradient_j = gradient_image_x(B, sigma).flatten()
             gradient_i = gradient_image_x(B.T, sigma).T.flatten()
             grad = np.column_stack([gradient_i,gradient_j])
@@ -192,7 +191,7 @@ class Pyramid_OF():
 
             theta_tot = np.zeros(2)
             for level in range(self.levels,-1,-1):
-                if level == self.levels[-1]:
+                if level == self.levels:
                     n = iters_upper_layer
                 else:
                     n = iters
@@ -234,9 +233,9 @@ if __name__ == "__main__":
     from scipy.ndimage import gaussian_filter
         
     Base = np.random.normal(size = (200,200))
-    Base = gaussian_filter(Base, 5.)
+    Base = gaussian_filter(Base, 8.)
 
-    dx, dy = 17, -17
+    dx, dy = 17, -19
 
     A, B = Base[30:158,30:158], Base[30+dx:158+dx,30+dy:158+dy]
 
@@ -245,11 +244,11 @@ if __name__ == "__main__":
     plt.subplot(1,2,2).imshow(B)
     plt.show()
     
-    pyramid = Pyramid_OF(128, 4)
+    pyramid = Pyramid_OF(128, 3)
     pyramid.compute_resized(A)
     pyramid.compute_gradient()
     pyramid.step()
 
     pyramid.compute_resized(B)
     pyramid.compute_gradient()
-    print(pyramid.compute_windowed_OF(np.ones((128,128), dtype=np.float32), iters=2, iters_upper_layer=2))
+    print(pyramid.compute_windowed_OF([(None, np.ones((128,128), dtype=np.float32))], iters=2, iters_upper_layer=4)[0])
