@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 def segmenter(A, A_RB, plots=False):
     """
-    Segment the clouds from a hemispheric sky image
+    Segments the clouds from a hemispheric sky image
 
     Parameters
     ----------
