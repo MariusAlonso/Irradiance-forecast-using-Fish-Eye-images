@@ -174,21 +174,38 @@ def inv_planar_proj(R0, h, D_output=128, base_img_center = None):
     return coords_proj
 
 
-def perisolar_mask(time, proj, D, r_mask):
+def perisolar_mask(time, D, r_mask, df):
+    """
+    Computes the theoretical position of the sun on an hemispherical image of the sky of size DxD.
+    Returns also a mask of radius r_mask centered on the sun (the mask is worth 0 inside the centered disk)
 
-    if time[0:4] == "2020":
-        final_df = pd.read_csv('full_df.csv')
-    else:
-        final_df = pd.read_csv('final_df.csv')
+    Parameters
+    ----------
+    time : str
+        String giving time, in format YYYY-MM-DD_HH_MM
+    D : int
+        Dimension of the hemispherical image
+    r_mask : int
+        Radius of the mask centered on the sun
+    df : pd.DataFrame
+        DataFrame containing solar altitude and solar azimuth data for each minute considered
 
-    final_df = final_df.set_index("Time")
+    Returns
+    -------
+    mask, (i_sol, j_sol)
 
-    r = 2*np.tan(np.pi/2 - final_df.loc[time,"Altitude"])*0.2
-    i_sol, j_sol = int(D//2*r*np.cos(np.pi*final_df.loc[time,"Azimuth"]/180)+D//2), int(D//2*r*np.sin(np.pi*final_df.loc[time,"Azimuth"]/180)+D//2)
+    mask : np.ndarray of shape (D,D) and of dtype bool
+        Mask centered on the sun
+    (i_sol, j_sol) : (int, int)
+        Coordinates of the sun
+    """
+
+    r = 2*np.tan(np.pi/2 - df.loc[time,"Altitude"])*0.2
+    i_sol, j_sol = int(D//2*r*np.cos(np.pi*df.loc[time,"Azimuth"]/180)+D//2), int(D//2*r*np.sin(np.pi*df.loc[time,"Azimuth"]/180)+D//2)
 
     I, J = ogrid[:D, :D]
     dist_from_center = (I - i_sol)**2 + (J - j_sol)**2
 
     mask = dist_from_center > r_mask**2
 
-    return mask[proj], (i_sol, j_sol)
+    return mask, (i_sol, j_sol)
