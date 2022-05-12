@@ -6,7 +6,7 @@ This repository is part of a 3-month research project - DATA SOPHIA - carried ou
 
 ## General purpose of the code
 
-The objective of the code is to make a short term (5 to 30 minutes) prediction of the solar irradiance, starting from hemispheric sky images taken minute by minute.
+The objective of the code is to make a short term (5 to 30 minutes) prediction of solar irradiance, based on hemispherical sky images taken minute by minute.
 
 In order to do so, a predictor algorithm is constructed. It works in two steps :
 - First, the current sky image is propagated : a prediction of what the sky will look like in one minute is performed. For that, the clouds are segmented from the sky image, a cloud motion vector field is computed, and eventually the segmented clouds are displaced according to this field.
@@ -53,3 +53,5 @@ Due to lack of time, the code remained rather messy, not very robust and not ver
 ## Acknowledgements
 
 I would like to thank Youri Tchouboukoff, who provided me with a segmenter code he developed back during winter 2020-2021. It has proved well on the dataset I used, and served for me as a starting point and guideline for my own segmenter (a much less robust version, simpler and tailored to the goals of my predictor).
+
+I would also like to thank SOLAÏS, which provided me with the images and associated irradiance data over several months of measurements, essential for training the estimator and building the predictor. The small dataset uploaded in the directory is a sample of the complete dataset provided by SOLAÏS. All rights reserved to them.
