@@ -28,4 +28,8 @@ The various inputs are stored in the /data file.
 ### Utilities
 
 - open-sans : a police used for outputs
-- image_flower.py : 
+- image_flower.py : a simple shifting and overlapping algorithm used to displace the cloud mask once the CMV field is computed
+- projections.py : allows to compute various image projections, including the planar projection, which the final predictor uses
+
+### Outputs
+
