@@ -13,4 +13,8 @@ The objective of the code is thus to make a prediction of the solar irradiance i
 The various inputs are stored in the /data file.
 
 - The images for prediction are meant to be stored in a subfile related to the specific camera used. Their format is JPEG and their size is 1280x960.
-- A csv file is also stored in data (one row per minute / image in the database). It contains necessarly the true mesured solar irradiance (for at least one captor) and various computations (GHI : global horizontal irradiance, Altitude (of the sun), Azimuth (of the sun))
+- A csv file is also stored in data (one row per minute / image in the database). It contains necessarly the true mesured solar irradiance (for at least one captor) and various computations (GHI : global horizontal irradiance, Altitude (of the sun), Azimuth (of the sun)). Other columns are not relevant.
+- A file named cnn.pth, corresponding to the pre-trained pytorch estimator model (more details below).
+- An image mask (format PNG), used to remove background pixels from various incomming computations.
+- A generic sun (format PNG), used notably when the sun, hidden up until now behind clouds, is predicted to appear.
+
