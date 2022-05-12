@@ -44,7 +44,7 @@ The various inputs are stored in the /data file.
 - results/prediction/ : results of the prediction, displayed as minute by minute images depicting the actual observed sky to the left and the predicted sky to the right (with the CMV field overlaid), and incorporating a graph of the solar irradiance predicted and real values.
 - results/optical_flow/ : results of the minute by minute CMV computation.
 - results/cloudmask_propagated/ : results of the minute by minute dispacement of the cloud mask.
-- results/bluesky_model/ : results of the progressive built up of the blue sky model during observation phase.
+- results/bluesky_model/ : results of the progressive built up of the blue sky background during observation phase.
 
 ## Known issues
 
@@ -52,4 +52,4 @@ Due to lack of time, the code remained rather messy, not very robust and not ver
 
 ## Acknowledgements
 
-I would like to thank Youri Tchouboukoff, who provided me with a segmenter code he developed back during winter 2020-2021. It has proved well on the dataset I used, and served for me as a starting point and guideline for my own segmenter (a much less robust version, simpler and tailored to the goals of my predictor)
+I would like to thank Youri Tchouboukoff, who provided me with a segmenter code he developed back during winter 2020-2021. It has proved well on the dataset I used, and served for me as a starting point and guideline for my own segmenter (a much less robust version, simpler and tailored to the goals of my predictor).

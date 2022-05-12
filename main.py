@@ -174,10 +174,16 @@ global_thetas = np.zeros((781,2))
 
 ########################
 
-M = int(input("Starting month ? "))
-D = int(input("Starting day ? "))
-h = int(input("Starting hour ? "))
-m = int(input("Starting min ? "))
+#M = int(input("Starting month ? "))
+#D = int(input("Starting day ? "))
+#h = int(input("Starting hour ? "))
+#m = int(input("Starting min ? "))
+
+# Available test instance
+M = 8
+D = 12
+h = 12
+m = 12
 
 
 # A negative value of - n means that the prediction will start after n calibration steps (n minutes)
@@ -254,7 +260,7 @@ for day, img in zip(day_range, min_range):
 
         # As an indication, we evaluate a "median" optical flow on the whole projection
         global_thetas[i] = np.median(thetas[i], axis=0)
-        print(global_thetas[i])
+        print("Global cloud motion :", global_thetas[i])
 
     ##################################################################
     # SEGMENTATION OF THE SKY IMAGE (Unused during prediction phase) #
@@ -285,28 +291,30 @@ for day, img in zip(day_range, min_range):
         bs_weight += (1-imagsegm)*(1-bs_weight)/4
         bs_weight *= 3/4
 
-        print(np.mean(bs_weight))
+        print("Blue-sky completion rate :", np.mean(bs_weight))
 
         """plt.subplot(1,2,1).imshow(blue_sky)
         plt.subplot(1,2,2).imshow(bs_weight)
         plt.show()"""
 
-    ###########################################################################
-    # COMPUTATION OF THE FINAL BLUESKY MODEL (At the start of the prediction) #
-    ###########################################################################
+    ############################################################################
+    # COMPUTATION OF THE FINAL BLUE SKY MODEL (At the start of the prediction) #
+    ############################################################################
 
     if pred_t == 0:
 
         print("START OF PREDICTION")
 
+        # We fill the holes that remain in the last iterated blue sky
         last_blue_sky = np.copy(blue_sky)
         lbs_null = (last_blue_sky[:,:,0] == 0)&(last_blue_sky[:,:,1] == 0)&(last_blue_sky[:,:,2] == 0)
         mean_lbs = np.mean(last_blue_sky[(np.sum(last_blue_sky, axis=2) < 0.9)&(~lbs_null)], axis = 0)
         last_blue_sky[lbs_null] = mean_lbs
 
+        # If the sun is not present in the last iterated blue sky (it has remained hidden), we manually add it
         i0_sol, j0_sol = i_sol, j_sol
         if np.sum(np.sum(last_blue_sky, axis=2) > 1.2) < 40:
-            print("sun manually added")
+            print("Sun manually added")
             sun = np.array(Image.open("data/generic_sun.png"))/255
             last_blue_sky[i_sol-48:i_sol+48, j_sol-48:j_sol+48] = sun
 
@@ -315,21 +323,6 @@ for day, img in zip(day_range, min_range):
         #last_blue_sky[np.sum(lbs_blurred, axis=2) <0.7] = lbs_blurred[np.sum(lbs_blurred, axis=2) <0.7]
 
         cache_images_flown[0] = np.copy(image_OF2)
-        #sol_color = np.array([1.,1.,1.])
-        #peri_sol_color = np.mean(cache_images_flown[0], axis=(0,1))
-        #cache_images_flown[0,125:131,125:131] = np.array([1.,0.,0.])
-
-        """try:
-            sol = cache_images_flown[0]>1.1
-            M = cv2.moments(sol.astype(float))
-            x_maxi, y_maxi = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
-        except:
-            x_maxi, y_maxi = j_sol, i_sol
-        
-        sol = np.sum(np.square(np.moveaxis(np.indices((256,256)),0,2) - np.array([y_maxi, x_maxi])), axis=2) <= 8**2"""
-
-        #cache_images_flown[0][sol&(cache_images_flown_RB[0] < 0.1)] =sol_color
-
         cache_images_flown_RB[0] = imagsegm
 
     ####################################################
@@ -337,29 +330,32 @@ for day, img in zip(day_range, min_range):
     ####################################################
 
     if pred_t > 0:
-      
-        img_padded = np.copy(cache_images_flown[pred_t%(T+1)-1]) #np.pad(image_base,((32,32),(32,32))).astype(np.float32) #,(0,0)
 
-        #img_padded[sol] = peri_sol_color
+        # RGB image to propagate
+        current_img = cache_images_flown[pred_t%(T+1)-1]
+        # Corresponding cloud mask to propagate
+        current_RB = cache_images_flown_RB[pred_t%(T+1)-1]
 
-        new_RB = np.zeros(img_padded.shape[:2])
-        new_img = np.zeros(img_padded.shape[:2] + (3,))
-        depth = np.zeros(img_padded.shape[:2])
+        # Propagation is done by adding every shifted window of "current_img/current_RB" to "new_img/new_RB"
+        new_img = np.zeros_like(current_img)
+        new_RB = np.zeros_like(current_RB)
+        # Since shifted windows overlap, we need to normalize the propagated images "new_img" and "new_RB"
+        depth = np.zeros_like(current_RB)
 
         for k, (center, window) in enumerate(windows):
+
+            # The motion vector used to propagate the clouds is the last optical flow computed on the window
+            # before the prediction phase
             dx, dy = int(np.round(thetas[i-pred_t%(T+1),k,0])), int(np.round(thetas[i-pred_t%(T+1),k,1]))
-
-            #dx, dy = (dphis[center].dot(np.array([dx,dy]))).astype(int)
-            #print(dx, dy)
             
-            #Image.fromarray((np.einsum("ij...,ij->ij...",img_padded, window)*255).astype(np.uint8)).save("imagflow3/" + str(k) + ".png")
+            #Image.fromarray((np.einsum("ij...,ij->ij...", current_img, window)*255).astype(np.uint8)).save("imagflow3/" + str(k) + ".png")
 
-            new_RB +=np.roll(cache_images_flown_RB[pred_t%(T+1)-1]*window,(dx, dy), axis=(0,1))
-            new_img += np.roll(np.einsum("ij...,ij->ij...",img_padded, window),(dx, dy), axis=(0,1))
+            new_RB += np.roll(current_RB*window, (dx, dy), axis=(0,1))
+            new_img += np.roll(np.einsum("ij...,ij->ij...", current_img, window),(dx, dy), axis=(0,1))
             depth += np.roll(window,(dx, dy), axis=(0,1))
 
+        # The propagated images are normalized
         null_depth = (depth == 0)
-
         new_img[~null_depth] = np.einsum("ij,i->ij",new_img[~null_depth],1/depth[~null_depth])
         new_RB[~null_depth] = new_RB[~null_depth]/depth[~null_depth]
 
@@ -368,19 +364,21 @@ for day, img in zip(day_range, min_range):
         plt.subplot(1,3,3).imshow(new_RB)
         plt.show()"""
 
+        # The blue sky model is translated to adjust for the movement of the sun
         translated_lbs = np.roll(last_blue_sky, (i_sol-i0_sol, j_sol-j0_sol), axis=(0,1))
 
         """plt.subplot(1,3,1).imshow(new_img)
         plt.subplot(1,3,3).imshow(new_RB)
         plt.show()"""
 
-        #new_img = translated_lbs
-        new_img[(new_RB < 0.3 )] = translated_lbs[(new_RB < 0.3 )]
-        new_img[(new_RB < 0.9)&(np.sum(translated_lbs, axis=2) > 1.2)] = translated_lbs[(new_RB < 0.9)&(np.sum(translated_lbs, axis=2) > 1.2)]
-
+        # The part of new image that is not overlapped by cloud mask is refreshed with blue sky model
+        new_img[(new_RB < 0.3)] = translated_lbs[(new_RB < 0.3)]       
+        
         cache_images_flown[pred_t%(T+1)] = new_img
-        #cache_images_flown[pred_t%(T+1),125:131,125:131] = np.array([1.,0.,0.])
         cache_images_flown_RB[pred_t%(T+1)] = new_RB
+
+        # If the cloud cover is not thick enough, the sun can break through it
+        new_img[(new_RB < 0.8)&(np.sum(translated_lbs, axis=2) > 1.2)] = translated_lbs[(new_RB < 0.8)&(np.sum(translated_lbs, axis=2) > 1.2)]
 
         # We save the propagated cloudmask at each step of the prediction
         new_RB_image = Image.fromarray((new_RB*255).astype(np.uint8))
@@ -390,17 +388,18 @@ for day, img in zip(day_range, min_range):
     # ESTIMATION OF SOLAR IRRADIANCE #
     ##################################
 
+    # Real value
     true_SIs.append(final_df.loc[img[:-4], "Irradiance"])
+
+    # Value given by the estimator on REAL sky image
     image_cnn = resize(np.moveaxis(image_OF2,2,0)[None,:,128:384,128:384], (1,3,64,64))
     estimated_SIs.append(cnn(torch.FloatTensor(image_cnn)).detach().numpy()[0,0]*100)
+
+    # Value given by the estimator on PREDICTED sky image (only if t >= 0)
     if pred_t == 0:
         predicted_SIs.append(estimated_SIs[-1])
     elif pred_t > 0:
-        image_cnn_flowed = cache_images_flown[pred_t]
-        #mask_invalid = np.ma.masked_invalid(np.sum(image_cnn_flowed, axis=2)).mask
-        #print(mask_invalid)
-        #image_cnn_flowed[mask_invalid] = last_blue_sky[mask_invalid]
-        image_cnn_flowed = resize(np.moveaxis(image_cnn_flowed,2,0)[None,:,128:384,128:384], (1,3,64,64))
+        image_cnn_flowed = resize(np.moveaxis(new_img,2,0)[None,:,128:384,128:384], (1,3,64,64))
         predicted_SIs.append(cnn(torch.FloatTensor(image_cnn_flowed)).detach().numpy()[0,0]*100)
 
     ############################
