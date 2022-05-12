@@ -10,7 +10,7 @@ The objective of the code is to make a short term (5 to 30 minutes) prediction o
 
 In order to do so, a predictor algorithm is constructed. It works in two steps :
 - First, the current sky image is propagated : a prediction of what the sky will look like in one minute is performed. For that, the clouds are segmented from the sky image, a cloud motion vector field is computed, and eventually the segmented clouds are displaced according to this field.
-- Then, an estimator trained to compute solar irradiance to corresponding sky image is put to use. The estimator, in the form of a Multi-Layer Perceptron, outputs the desired solar irradiance
+- Then, an estimator trained to compute solar irradiance to corresponding sky image is put to use. The estimator, in the form of a Multi-Layer Perceptron, outputs the desired solar irradiance.
 
 This process is repeated minute by minute.
 
