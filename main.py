@@ -176,14 +176,13 @@ global_thetas = np.zeros((781,2))
 
 #M = int(input("Starting month ? "))
 #D = int(input("Starting day ? "))
-#h = int(input("Starting hour ? "))
-#m = int(input("Starting min ? "))
+
 
 # Available test instance
 M = 8
 D = 12
-h = 12
-m = 12
+h = int(input("Starting hour ? "))
+m = int(input("Starting min ? "))
 
 
 # A negative value of - n means that the prediction will start after n calibration steps (n minutes)
@@ -274,17 +273,7 @@ for day, img in zip(day_range, min_range):
         # Its result is then projected in the zenith plane, where most of the computations of the model are performed
         imagsegm = imagsegm_hemi[proj_segm]
 
-        """plt.subplot(2,2,1).imshow(image_512)
-        plt.subplot(2,2,2).imshow(np.einsum("...k,...", image_512, imagsegm_hemi == 0))
-        plt.subplot(2,2,3).imshow(image_OF2)
-        plt.subplot(2,2,4).imshow(np.einsum("...k,...", image_OF2, imagsegm == 0))
-        plt.show()"""
-
         sky = (imagsegm == 0)
-
-        """plt.subplot(1,2,1).imshow(image_512)
-        plt.subplot(1,2,2).imshow(sky)
-        plt.show()"""
 
         # The blue sky model is updated with sky given by last segmentation results
         blue_sky[sky] = (np.einsum('...,...k',(1-bs_weight),image_OF2) + np.einsum('...,...k',bs_weight,blue_sky))[sky]
@@ -292,10 +281,6 @@ for day, img in zip(day_range, min_range):
         bs_weight *= 3/4
 
         print("Blue-sky completion rate :", np.mean(bs_weight))
-
-        """plt.subplot(1,2,1).imshow(blue_sky)
-        plt.subplot(1,2,2).imshow(bs_weight)
-        plt.show()"""
 
     ############################################################################
     # COMPUTATION OF THE FINAL BLUE SKY MODEL (At the start of the prediction) #
@@ -347,9 +332,7 @@ for day, img in zip(day_range, min_range):
             # The motion vector used to propagate the clouds is the last optical flow computed on the window
             # before the prediction phase
             dx, dy = int(np.round(thetas[i-pred_t%(T+1),k,0])), int(np.round(thetas[i-pred_t%(T+1),k,1]))
-            
-            #Image.fromarray((np.einsum("ij...,ij->ij...", current_img, window)*255).astype(np.uint8)).save("imagflow3/" + str(k) + ".png")
-
+  
             new_RB += np.roll(current_RB*window, (dx, dy), axis=(0,1))
             new_img += np.roll(np.einsum("ij...,ij->ij...", current_img, window),(dx, dy), axis=(0,1))
             depth += np.roll(window,(dx, dy), axis=(0,1))
@@ -378,7 +361,7 @@ for day, img in zip(day_range, min_range):
         cache_images_flown_RB[pred_t%(T+1)] = new_RB
 
         # If the cloud cover is not thick enough, the sun can break through it
-        new_img[(new_RB < 0.8)&(np.sum(translated_lbs, axis=2) > 1.2)] = translated_lbs[(new_RB < 0.8)&(np.sum(translated_lbs, axis=2) > 1.2)]
+        new_img[(new_RB < 0.7)&(np.sum(translated_lbs, axis=2) > 1.2)] = translated_lbs[(new_RB < 0.7)&(np.sum(translated_lbs, axis=2) > 1.2)]
 
         # We save the propagated cloudmask at each step of the prediction
         new_RB_image = Image.fromarray((new_RB*255).astype(np.uint8))
@@ -484,5 +467,3 @@ for day, img in zip(day_range, min_range):
 
     if pred_t > T:
         break
-
-plt.show()
