@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository is part of a 3-month research project - DATA SOPHIA - carried out under the supervision of the research laboratories of the Ecole Mines Paris PSL in Sophia Antipolis. The code was developed as a particular approach to the problem of solar irradiance prediction from hemispheric sky images. This approach is the subject of a report in the format of a scientific article ([link to the report](../rapport.pdf)).
+This repository is part of a 3-month research project - DATA SOPHIA - carried out under the supervision of the research laboratories of the Ecole Mines Paris PSL in Sophia Antipolis. The code was developed as a particular approach to the problem of solar irradiance prediction from hemispheric sky images. This approach is the subject of a report in the format of a scientific article ([link to the report](./rapport.pdf)).
 
 ## General purpose of the code
 
